@@ -1,0 +1,24 @@
+name: Deploy API
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    if: ${{ vars.API_DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build --if-present
+
+      # Provider-specific deployment command belongs here.
+      # Keep provider credentials in GitHub Actions secrets.
+      - name: Deploy
+        run: echo "Configure the production API deployment command for the selected hosting provider."
