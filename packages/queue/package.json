@@ -1,0 +1,26 @@
+{
+  "name": "@sellonit/queue",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SERVER-ONLY. Shared BullMQ/Redis queue setup for @sellonit/api and @sellonit/worker. Must never be imported by apps/web.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "bullmq": "^5.81.5",
+    "ioredis": "^5.11.1"
+  }
+}

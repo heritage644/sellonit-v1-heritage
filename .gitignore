@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+apps/web/.next/
+apps/web/next-env.d.ts
+out/
+build/
+
+# Generated code that is NOT committed
+# (packages/shared/src/api.d.ts IS committed — CI verifies it is up to date)
+apps/api/src/generated/
+
+# Environment files (never commit real secrets)
+.env
+.env.*
+!.env.example
+
+# Test / coverage
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

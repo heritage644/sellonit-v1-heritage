@@ -1,0 +1,42 @@
+name: Deploy API
+
+# Deploy only commits on main that passed CI (not on every push, which would
+# race CI and could ship a failing commit).
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+# Never run two production deploys at once; queue instead of cancelling.
+concurrency:
+  group: deploy-api-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ vars.API_DEPLOY_ENABLED == 'true' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The exact commit CI verified.
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Build what the API needs (shared packages + Prisma client + API), not the whole monorepo.
+      - run: npm run build:packages && npm run build -w @sellonit/api
+
+      # Provider-specific deployment command belongs here.
+      # Keep provider credentials in GitHub Actions secrets.
+      # Apply database migrations (`npm run db:deploy`, or the API image's `migrate`
+      # target) before the new version receives traffic.
+      - name: Deploy
+        run: echo "Configure the production API deployment command for the selected hosting provider."

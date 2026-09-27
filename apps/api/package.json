@@ -1,0 +1,35 @@
+{
+  "name": "@sellonit/api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sellonit REST API (Express). Implements docs/openapi.yaml.",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false --env-file-if-exists=../../.env src/main.ts",
+    "prebuild": "npm run db:generate",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:integration": "vitest run --config vitest.integration.config.ts --passWithNoTests",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "@sellonit/config": "*",
+    "@sellonit/queue": "*",
+    "@sellonit/shared": "*",
+    "bullmq": "^5.81.5",
+    "express": "^5.2.1",
+    "ioredis": "^5.11.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "prisma": "^7.10.0",
+    "tsx": "^4.23.15"
+  }
+}

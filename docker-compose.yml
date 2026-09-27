@@ -1,0 +1,122 @@
+# Sellonit local environment.
+#
+#   cp .env.example .env
+#   docker compose up -d                       # PostgreSQL + Redis only (for `npm run dev`)
+#   docker compose --profile apps up --build   # + migrate, api, worker, web in containers
+#
+# Ports bind to 127.0.0.1 only. Values are interpolated from .env (read by
+# docker compose automatically) — no credentials are hardcoded here.
+# If POSTGRES_PASSWORD contains URL-reserved characters, percent-encode it.
+
+name: sellonit
+
+# Shared by api and worker.
+x-app-env: &app-env
+  NODE_ENV: ${NODE_ENV:-development}
+  DATABASE_URL: postgresql://${POSTGRES_USER:-sellonit}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-sellonit}?schema=public
+  REDIS_URL: redis://redis:6379
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sellonit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-sellonit}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    # BullMQ requires noeviction: evicted keys would silently lose jobs.
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # One-off: applies committed Prisma migrations, then exits.
+  migrate:
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: migrate
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sellonit}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-sellonit}?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: runtime
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+      API_HOST: 0.0.0.0
+      API_PORT: 4000
+    ports:
+      - "127.0.0.1:4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+      target: runtime
+    # The worker entry point has no jobs yet and exits right away; on-failure
+    # avoids a restart loop. Switch to unless-stopped once it runs BullMQ workers.
+    restart: on-failure
+    environment:
+      <<: *app-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: runtime
+      args:
+        API_INTERNAL_URL: http://api:4000
+    restart: unless-stopped
+    environment:
+      API_INTERNAL_URL: http://api:4000
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  postgres-data:
+  redis-data:

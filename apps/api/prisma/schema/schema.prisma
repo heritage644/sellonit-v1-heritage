@@ -1,0 +1,15 @@
+// Prisma multi-file schema. Add model files next to this one
+// (e.g. prisma/schema/orders.prisma) and run `npm run db:migrate`.
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../../src/generated/prisma"
+  // Match the API's ESM + NodeNext TypeScript setup so `tsc` compiles the
+  // generated client like any other source file.
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}

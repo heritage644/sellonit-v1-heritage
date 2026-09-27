@@ -1,0 +1,22 @@
+# Keep the build context small and free of secrets/local artefacts.
+.git
+.github
+**/node_modules
+**/dist
+**/coverage
+**/.next
+**/*.tsbuildinfo
+**/next-env.d.ts
+apps/api/src/generated
+
+# Secrets and local configuration never enter an image.
+.env
+.env.*
+!.env.example
+
+# Not needed to build or run the apps.
+docs
+*.md
+!apps/**/README.md
+.vscode
+.idea
