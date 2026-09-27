@@ -1,6 +1,6 @@
-# Retaila API Contract
+# Sellonit API Contract
 
-Canonical OpenAPI 3.1 contract for the Retaila MVP.
+Canonical OpenAPI 3.1 contract for the Sellonit MVP.
 
 ## Source of truth
 

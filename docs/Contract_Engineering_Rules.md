@@ -1,4 +1,4 @@
-# Retaila Contract Engineering Rules
+# Sellonit Contract Engineering Rules
 
 ## Versioning
 - Base path is `/v1`.
