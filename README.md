@@ -23,6 +23,8 @@ packages/
   queue/      SERVER-ONLY: queue names, job payload contracts, Redis/BullMQ connection factory
 docs/
   openapi.yaml          The API contract — source of truth for the HTTP API
+  README.md             Contract README: domain rules, MVP aggregation rules, CI contract gate
+  Contract_Engineering_Rules.md  Versioning, HTTP semantics, concurrency, authorization, payment rules
   contract-review.md    Open questions/inconsistencies found in the contract
 scripts/
   check-api-types.mjs   Fails if generated API types drift from docs/openapi.yaml
@@ -84,7 +86,8 @@ To run everything in containers instead: `docker compose --profile apps up --bui
 
 `docs/openapi.yaml` is the source of truth. To change the API:
 
-1. Edit `docs/openapi.yaml` (contract changes need review — see `docs/contract-review.md`).
+1. Edit `docs/openapi.yaml` following `docs/Contract_Engineering_Rules.md` (breaking changes need a
+   new API version; open questions are in `docs/contract-review.md`).
 2. `npm run validate:api && npm run generate:api` and commit the regenerated
    `packages/shared/src/api.d.ts` together with the contract.
 3. Update the route registry in the relevant `apps/api/src/modules/*` —

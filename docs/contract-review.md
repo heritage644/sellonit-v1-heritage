@@ -11,20 +11,26 @@ any of the open items below; each needs a product/API-owner decision.
 | `docs(contract): make OpenAPI 3.1-valid and rebrand to Sellonit` | 26 × `nullable: true` → `type: [<type>, 'null']`                                                                                     | `nullable` is not an OpenAPI 3.1 keyword; `redocly lint` failed with 26 errors. Generated TypeScript is byte-identical |
 | same                                                             | Title, description, health example and server URLs → Sellonit (`https://api.sellonit.app/v1`, `https://staging-api.sellonit.app/v1`) | Product rename                                                                                                         |
 
+Under the Versioning rules in `docs/Contract_Engineering_Rules.md`, the
+`nullable` conversion is **non-breaking**: no field was removed, renamed or
+tightened, and the generated types are unchanged.
+
 `redocly lint` now reports **0 errors, 179 warnings** — breakdown in item 17.
 
 ## Open items (contract unchanged)
 
 ### Security and access
 
-1. **Guest checkout vs. protected reads.** `POST /carts/{cartId}/checkout` and
+1. **Guest checkout vs. protected reads.** `POST /checkout` and
    `POST /payments/initialize` are public (guest checkout), but
    `GET /orders/{orderId}` and `GET /payments/{paymentId}` require a bearer
    token. A guest cannot see the order or payment they just created. Decide on a
    guest access mechanism (e.g. order access token, signed link) or require login.
+   (Rules: authorization is by user + membership + ownership; a guest has none.)
 2. **Public cart ownership.** `PATCH /carts/{cartId}` is public and accepts a
    `customerId`; anyone holding a cart ID can attach it to any customer. Needs
-   a cart secret/token or server-side customer resolution.
+   a cart secret/token or server-side customer resolution. (Contract README domain
+   rule 8: tenant-owned resources must be authorization scoped.)
 3. **Webhook contracts don't match real providers.**
    - `X-Payment-Signature` is not the header any real provider sends (Paystack uses
      `x-paystack-signature`, Flutterwave `verif-hash`); request bodies are also
@@ -37,9 +43,17 @@ any of the open items below; each needs a product/API-owner decision.
 
 ### Domain model
 
-4. **Demand aggregation grouping.** `DemandBatch` is keyed by supplier only,
-   while the README describes grouping by supplier _and product_. Batch
-   holding period / aggregation window are undefined.
+4. **Demand aggregation grouping.** The contract README's MVP rules give a
+   2–3 day window, a 50-unit early trigger "for a supplier", grouping "by
+   supplier/product", and an `IN_HUB_HOLDING` "defined holding period".
+   The contract models the window and trigger (`DemandBatch.closesAt`,
+   `thresholdUnits`) and the holding state (`Shipment.holdingUntil`). Open:
+   - `DemandBatch` has `supplierBusinessId` but no product, so it cannot
+     represent supplier/product grouping.
+   - The README itself is ambiguous: is the 50-unit trigger counted per
+     supplier or per supplier/product group?
+   - "2–3 days" is a range: fixed value, per-supplier setting, or configuration?
+   - The holding period's length is not defined anywhere.
 5. **`Hub` resource missing.** `hubId` / `destinationHubId` are referenced but no
    `Hub` schema or endpoints exist.
 6. **Identifier naming.** `supplierId` and `supplierBusinessId` are used for what
