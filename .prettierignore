@@ -1,0 +1,13 @@
+node_modules
+dist
+coverage
+package-lock.json
+apps/web/.next
+apps/api/src/generated
+apps/api/prisma/migrations
+
+# Generated from docs/openapi.yaml — must stay byte-identical to openapi-typescript output
+packages/shared/src/api.d.ts
+
+# The API contract is formatted by hand; do not reflow it
+docs/openapi.yaml
