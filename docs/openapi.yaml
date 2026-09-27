@@ -1,15 +1,15 @@
 openapi: 3.1.0
 info:
-  title: sellonit API
+  title: Sellonit API
   version: 1.0.0
   description: |
-    Canonical API contract for Retaila.
+    Canonical API contract for Sellonit.
 
-    sellonit is a virtual-inventory commerce and supply-chain platform connecting
+    Sellonit is a virtual-inventory commerce and supply-chain platform connecting
     suppliers/manufacturers, independent online retailers, and customers.
 
     Core model:
-      Supplier/Manufacturer -> Retaila -> Retailer Store -> Customer
+      Supplier/Manufacturer -> Sellonit -> Retailer Store -> Customer
 
     The API separates:
       - identity and business membership
@@ -34,9 +34,9 @@ info:
         user's business/store membership.
 
 servers:
-  - url: https://api.retaila.app/v1
+  - url: https://api.sellonit.app/v1
     description: Production
-  - url: https://staging-api.retaila.app/v1
+  - url: https://staging-api.sellonit.app/v1
     description: Staging
   - url: http://localhost:4000/v1
     description: Local development
@@ -1641,7 +1641,7 @@ components:
         lastName: {type: string, maxLength: 80}
         phone: {type: string, maxLength: 30}
         status: {$ref: '#/components/schemas/UserStatus'}
-        emailVerifiedAt: {type: string, format: date-time, nullable: true}
+        emailVerifiedAt: {type: [string, 'null'], format: date-time}
         createdAt: {type: string, format: date-time}
         updatedAt: {type: string, format: date-time}
 
@@ -1685,7 +1685,7 @@ components:
         description: {type: string, maxLength: 2000}
         logoUrl: {type: string, format: uri}
         status: {$ref: '#/components/schemas/StoreStatus'}
-        publishedAt: {type: string, format: date-time, nullable: true}
+        publishedAt: {type: [string, 'null'], format: date-time}
         createdAt: {type: string, format: date-time}
         updatedAt: {type: string, format: date-time}
 
@@ -1720,7 +1720,7 @@ components:
         sku: {type: string, minLength: 1, maxLength: 100}
         name: {type: string, minLength: 1, maxLength: 200}
         description: {type: string, maxLength: 5000}
-        categoryId: {type: string, format: uuid, nullable: true}
+        categoryId: {type: [string, 'null'], format: uuid}
         basePrice: {$ref: '#/components/schemas/Money'}
         inventoryCount: {type: integer, minimum: 0}
         reservedCount: {type: integer, minimum: 0}
@@ -1738,7 +1738,7 @@ components:
         fixedRetailPrice: {$ref: '#/components/schemas/Money'}
         minimumRetailPrice: {$ref: '#/components/schemas/Money'}
         effectiveFrom: {type: string, format: date-time}
-        effectiveTo: {type: string, format: date-time, nullable: true}
+        effectiveTo: {type: [string, 'null'], format: date-time}
 
     RetailerProductListing:
       type: object
@@ -1807,7 +1807,7 @@ components:
       properties:
         id: {type: string, format: uuid}
         storeId: {type: string, format: uuid}
-        customerId: {type: string, format: uuid, nullable: true}
+        customerId: {type: [string, 'null'], format: uuid}
         items:
           type: array
           items: {$ref: '#/components/schemas/CartItem'}
@@ -1835,7 +1835,7 @@ components:
         id: {type: string, format: uuid}
         orderNumber: {type: string}
         storeId: {type: string, format: uuid}
-        customerId: {type: string, format: uuid, nullable: true}
+        customerId: {type: [string, 'null'], format: uuid}
         status: {$ref: '#/components/schemas/OrderStatus'}
         items:
           type: array
@@ -1844,9 +1844,9 @@ components:
         subtotal: {$ref: '#/components/schemas/Money'}
         deliveryFee: {$ref: '#/components/schemas/Money'}
         total: {$ref: '#/components/schemas/Money'}
-        paymentId: {type: string, format: uuid, nullable: true}
+        paymentId: {type: [string, 'null'], format: uuid}
         createdAt: {type: string, format: date-time}
-        paidAt: {type: string, format: date-time, nullable: true}
+        paidAt: {type: [string, 'null'], format: date-time}
 
     Payment:
       type: object
@@ -1858,7 +1858,7 @@ components:
         providerReference: {type: string}
         status: {$ref: '#/components/schemas/PaymentStatus'}
         amount: {$ref: '#/components/schemas/Money'}
-        paidAt: {type: string, format: date-time, nullable: true}
+        paidAt: {type: [string, 'null'], format: date-time}
         createdAt: {type: string, format: date-time}
 
     Inventory:
@@ -1884,8 +1884,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FulfillmentItem'
-        batchId: {type: string, format: uuid, nullable: true}
-        bulkSupplyRequestId: {type: string, format: uuid, nullable: true}
+        batchId: {type: [string, 'null'], format: uuid}
+        bulkSupplyRequestId: {type: [string, 'null'], format: uuid}
         shipmentIds:
           type: array
           items: {type: string, format: uuid}
@@ -1913,8 +1913,8 @@ components:
         thresholdUnits: {type: integer, minimum: 1, default: 50}
         openedAt: {type: string, format: date-time}
         closesAt: {type: string, format: date-time}
-        releasedAt: {type: string, format: date-time, nullable: true}
-        bulkSupplyRequestId: {type: string, format: uuid, nullable: true}
+        releasedAt: {type: [string, 'null'], format: date-time}
+        bulkSupplyRequestId: {type: [string, 'null'], format: uuid}
 
     BulkSupplyRequest:
       type: object
@@ -1930,8 +1930,8 @@ components:
           items:
             $ref: '#/components/schemas/BulkSupplyItem'
         requestedAt: {type: string, format: date-time}
-        acknowledgedAt: {type: string, format: date-time, nullable: true}
-        receivedAt: {type: string, format: date-time, nullable: true}
+        acknowledgedAt: {type: [string, 'null'], format: date-time}
+        receivedAt: {type: [string, 'null'], format: date-time}
 
     BulkSupplyItem:
       type: object
@@ -1949,12 +1949,12 @@ components:
         orderId: {type: string, format: uuid}
         fulfillmentId: {type: string, format: uuid}
         status: {$ref: '#/components/schemas/ShipmentStatus'}
-        trackingNumber: {type: string, nullable: true}
-        provider: {type: string, nullable: true}
-        providerShipmentId: {type: string, nullable: true}
+        trackingNumber: {type: [string, 'null']}
+        provider: {type: [string, 'null']}
+        providerShipmentId: {type: [string, 'null']}
         destination: {$ref: '#/components/schemas/Address'}
-        hubId: {type: string, format: uuid, nullable: true}
-        holdingUntil: {type: string, format: date-time, nullable: true}
+        hubId: {type: [string, 'null'], format: uuid}
+        holdingUntil: {type: [string, 'null'], format: date-time}
         createdAt: {type: string, format: date-time}
         updatedAt: {type: string, format: date-time}
 
@@ -1965,8 +1965,8 @@ components:
         id: {type: string, format: uuid}
         shipmentId: {type: string, format: uuid}
         status: {$ref: '#/components/schemas/ShipmentStatus'}
-        location: {type: string, nullable: true}
-        note: {type: string, nullable: true}
+        location: {type: [string, 'null']}
+        note: {type: [string, 'null']}
         occurredAt: {type: string, format: date-time}
 
     Notification:
@@ -1977,7 +1977,7 @@ components:
         type: {type: string}
         title: {type: string}
         body: {type: string}
-        readAt: {type: string, format: date-time, nullable: true}
+        readAt: {type: [string, 'null'], format: date-time}
         createdAt: {type: string, format: date-time}
 
     RegisterRequest:
@@ -2121,7 +2121,7 @@ components:
       properties:
         name: {type: string, maxLength: 200}
         description: {type: string, maxLength: 5000}
-        categoryId: {type: string, format: uuid, nullable: true}
+        categoryId: {type: [string, 'null'], format: uuid}
         basePrice: {$ref: '#/components/schemas/Money'}
         originLocation: {$ref: '#/components/schemas/Address'}
 
@@ -2145,7 +2145,7 @@ components:
         fixedRetailPrice: {$ref: '#/components/schemas/Money'}
         minimumRetailPrice: {$ref: '#/components/schemas/Money'}
         effectiveFrom: {type: string, format: date-time}
-        effectiveTo: {type: string, format: date-time, nullable: true}
+        effectiveTo: {type: [string, 'null'], format: date-time}
 
     AddRetailerListingRequest:
       type: object
@@ -2172,7 +2172,7 @@ components:
     UpdateCartRequest:
       type: object
       properties:
-        customerId: {type: string, format: uuid, nullable: true}
+        customerId: {type: [string, 'null'], format: uuid}
 
     AddCartItemRequest:
       type: object
@@ -2455,7 +2455,7 @@ components:
       required: [status, service, timestamp]
       properties:
         status: {type: string, enum: [ok, ready]}
-        service: {type: string, example: retaila-api}
+        service: {type: string, example: sellonit-api}
         timestamp: {type: string, format: date-time}
 
     PaginationMeta:
