@@ -1,0 +1,41 @@
+name: API Contract
+
+on:
+  pull_request:
+    paths:
+      - "docs/openapi.yaml"
+      - "packages/shared/**"
+      - "package.json"
+      - ".github/workflows/api-contract.yml"
+  push:
+    branches: [main]
+    paths:
+      - "docs/openapi.yaml"
+      - "packages/shared/**"
+      - "package.json"
+      - ".github/workflows/api-contract.yml"
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Validate OpenAPI
+        run: npx @redocly/cli lint docs/openapi.yaml
+
+      - name: Generate API types
+        run: npx openapi-typescript docs/openapi.yaml -o packages/shared/src/api.d.ts
+
+      - name: Verify generated API types are committed
+        run: git diff --exit-code -- packages/shared/src/api.d.ts
