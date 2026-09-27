@@ -1,0 +1,26 @@
+{
+  "name": "@sellonit/queue",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SERVER-ONLY. Queue names, job payload contracts and BullMQ/Redis connection helpers shared by @sellonit/api (producer) and @sellonit/worker (consumer). Must never be imported by apps/web.",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "bullmq": "^5.81.5",
+    "ioredis": "^5.11.1"
+  }
+}
