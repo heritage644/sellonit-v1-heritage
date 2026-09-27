@@ -6,6 +6,7 @@ on:
       - "docs/openapi.yaml"
       - "packages/shared/**"
       - "package.json"
+      - "package-lock.json"
       - ".github/workflows/api-contract.yml"
   push:
     branches: [main]
@@ -13,6 +14,7 @@ on:
       - "docs/openapi.yaml"
       - "packages/shared/**"
       - "package.json"
+      - "package-lock.json"
       - ".github/workflows/api-contract.yml"
 
 jobs:
@@ -25,7 +27,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install
