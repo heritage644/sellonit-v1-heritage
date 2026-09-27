@@ -24,7 +24,12 @@ export function createOrdersModule() {
     plannedRoute('post', '/checkout', { access: 'public', idempotencyKey: true }),
     plannedRoute('get', '/orders', { access: 'authenticated' }),
     plannedRoute('get', '/orders/{orderId}', { access: 'authenticated' }),
-    route('post', '/orders/{orderId}', { access: 'authenticated', handlers: [methodNotAllowed] }),
+    route('post', '/orders/{orderId}', {
+      access: 'authenticated',
+      // Answers 405 without reading any order, so no resource check applies.
+      authorization: 'no-resource-access',
+      handlers: [methodNotAllowed],
+    }),
     plannedRoute('post', '/orders/{orderId}/cancel', {
       access: 'authenticated',
       idempotencyKey: true,

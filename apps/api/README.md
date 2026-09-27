@@ -35,7 +35,7 @@ test/                     contract conformance, HTTP behaviour, integration (rea
 ```
 request-id → http-logger → helmet → CORS → JSON body parser (keeps raw bytes)
   (request-id and logging come first so even rejected requests are correlated and logged)
-  → /v1 router: [rate limit] → [authenticate] → [Idempotency-Key] → [module-specific, e.g. webhook signature] → handler
+  → /v1 router: [rate limit] → [authenticate → authorization] → [Idempotency-Key] → [module-specific, e.g. webhook signature] → handler
   → 404 handler → central error handler (always the contract ErrorResponse)
 ```
 
@@ -53,12 +53,31 @@ drift from `docs/openapi.yaml`.
 
 ### Implementing an operation
 
-1. Replace `plannedRoute(...)` with `route(..., validate(schemas), handler)` in the module's `*.routes.ts`.
-2. Put business logic in a `*.service.ts` and data access in a `*.repository.ts` inside the module.
-3. Add the module's Prisma models in `prisma/schema/<module>.prisma` and run `npm run db:migrate`.
-4. Use `requireBusinessRole(lookup, …)` for business-scoped authorization (a real
-   `MembershipLookup` backed by the database must replace `noMemberships`).
+1. Replace `plannedRoute(...)` with `route(...)` in the module's `*.routes.ts`,
+   with `validate(schemas)` and the handler in `handlers`.
+2. **Authenticated routes must declare `authorization`** or they don't compile:
+   membership/ownership middleware such as `[requireBusinessRole(lookup, …)]`, or
+   the explicit exemptions `'caller-only'` / `'no-resource-access'`. A valid JWT
+   alone is never sufficient. A real `MembershipLookup` backed by the database
+   must replace `noMemberships`.
+3. Put business logic in a `*.service.ts` and data access in a `*.repository.ts` inside the module.
+4. Add the module's Prisma models in `prisma/schema/<module>.prisma` and run `npm run db:migrate`.
 5. Update the expected status in the conformance test.
+
+### Rules every implementation must follow
+
+From [`docs/Contract_Engineering_Rules.md`](../../docs/Contract_Engineering_Rules.md)
+and the [contract README](../../docs/README.md):
+
+- **Inventory** changes run inside a database transaction; supplier inventory is the source of truth.
+- **Checkout** validates price and stock against the database, never against client-supplied values.
+- **Idempotency:** implement `Idempotency-Key` replay storage before any operation that declares it.
+- **Payments:** the browser may start a payment but can never mark an order paid.
+  Only a verified provider webhook or a server-side verification changes payment state.
+  Providers retry webhooks, so deduplicate events by provider reference.
+- **Order ≠ Fulfillment ≠ Shipment:** creating an order does not mean stock has reached the 3PL.
+- **HTTP:** `204` responses have no body. `PUT` is only for singleton resources (profiles, pricing rules).
+- **Versioning:** removing or renaming fields, changing their meaning, or tightening validation is breaking and needs a new API version.
 
 ## Domain modules
 
@@ -93,7 +112,7 @@ drift from `docs/openapi.yaml`.
 | Request ID       | `X-Request-Id` accepted if safe (`^[A-Za-z0-9._:-]{8,128}$`), else a UUID; echoed in header, logs and errors                                                                                                                          |
 | Logging          | pino JSON, one line per request: time, level, reqId, method, path (no query), route template, status, durationMs. No headers/bodies. Health probes at `debug`                                                                         |
 | Authentication   | `Authorization: Bearer` HS256 JWT via `jose`; `iss`, `aud`, `exp`, UUID `sub` required. Without `JWT_ACCESS_SECRET` every protected route answers 401 (fails closed). Token issuance is not implemented (Auth module is 501)          |
-| Authorization    | `requireBusinessRole(lookup, { businessId, roles })`; default lookup grants nothing                                                                                                                                                   |
+| Authorization    | Implemented authenticated routes must declare `authorization` (type-checked, verified at start-up); it runs right after authentication. `requireBusinessRole(lookup, { businessId, roles })`; the default lookup grants nothing       |
 | Rate limiting    | `express-rate-limit`, IETF draft-8 headers, 429 `RATE_LIMITED` + `Retry-After`. Tiers: `default`, `auth`, `none` (webhooks, health). **In-memory store: per instance** — use a Redis store before running multiple replicas           |
 | Idempotency      | `Idempotency-Key` (16–128 chars) enforced where the contract declares it. **Replay storage is not implemented** — it must be added (PostgreSQL, same transaction as the write) before those operations are implemented                |
 | Webhooks         | HMAC over the exact raw body, constant-time compare. Payments: `X-Payment-Signature`, SHA-512 hex. 3PL: `X-Webhook-Signature`, SHA-256 hex. Missing secret → 503 (fails closed). See [contract review](../../docs/contract-review.md) |

@@ -14,7 +14,7 @@ export function toExpressPath(openApiPath: string): string {
 
 /**
  * Mounts every module route with the same cross-cutting chain, in order:
- *   rate limit → authentication (non-public routes) → Idempotency-Key → handlers.
+ *   rate limit → authentication + authorization (non-public routes) → Idempotency-Key → handlers.
  * Contract-level requirements are therefore applied uniformly and cannot be
  * forgotten by an individual module.
  */
@@ -37,7 +37,8 @@ export function buildApiRouter(modules: readonly ApiModule[], deps: RouterDepend
         },
       ];
       if (definition.rateLimit !== 'none') chain.push(deps.rateLimiters[definition.rateLimit]);
-      if (definition.access === 'authenticated') chain.push(deps.authenticate);
+      if (definition.access === 'authenticated')
+        chain.push(deps.authenticate, ...definition.authorization);
       if (definition.idempotencyKey) chain.push(requireIdempotencyKey());
       chain.push(...definition.handlers);
 
