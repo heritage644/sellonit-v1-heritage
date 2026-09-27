@@ -59,7 +59,6 @@ COPY --from=build /repo/apps/api/dist apps/api/dist
 WORKDIR /repo/apps/api
 USER node
 EXPOSE 4000
-HEALTHCHECK --interval=15s --timeout=3s --start-period=10s --retries=3 \
-  CMD ["node", "-e", "fetch('http://127.0.0.1:' + (process.env.API_PORT || 4000) + '/v1/health').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
-# Node receives SIGTERM directly (exec form) and shuts down gracefully.
+# Add a HEALTHCHECK here once the contract's GET /v1/health endpoint exists.
+# Exec form: Node receives SIGTERM directly.
 CMD ["node", "dist/main.js"]

@@ -36,10 +36,9 @@ tightened, and the generated types are unchanged.
      `x-paystack-signature`, Flutterwave `verif-hash`); request bodies are also
      provider-specific.
    - `ThreePLWebhookEvent` requires _our_ `shipmentId`; 3PLs send their own tracking reference.
-   - No signature scheme is specified. **Implemented assumption:** HMAC-SHA512 hex
-     of the raw body for payments (Paystack scheme), HMAC-SHA256 hex for 3PL.
-     Recommendation: per-provider webhook paths, adapters behind
-     `PaymentProvider` / `FulfillmentProvider`, provider references in the contract.
+   - No signature scheme is specified (e.g. Paystack signs the raw body with
+     HMAC-SHA512). Recommendation: per-provider webhook paths and provider
+     references in the contract.
 
 ### Domain model
 
@@ -73,14 +72,14 @@ tightened, and the generated types are unchanged.
 12. `Address.city` / `Address.state` have no `minLength` (empty strings valid).
 13. Undefined behaviour: `FLEXIBLE` pricing rules, negative retailer margin,
     delivery-fee calculation.
-14. Error `code` values are free-form strings; the set used by the API is in
-    `packages/shared/src/errors.ts` (`ERROR_CODES`) and should be documented in the contract.
+14. Error `code` values are free-form strings; the allowed set should be
+    documented in the contract.
 15. Paginated responses don't mark `data` / `meta` as `required`, so generated
     types make them optional.
 
 ### Hygiene
 
-16. `/me` is tagged _Auth_ but is a user-profile resource (implemented in the `users` module).
+16. `/me` is tagged _Auth_ but is a user-profile resource.
 17. 179 `redocly lint` warnings (recommended ruleset):
 
     | Rule                     | Count | Note                                                                                |

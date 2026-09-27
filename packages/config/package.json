@@ -2,7 +2,7 @@
   "name": "@sellonit/config",
   "version": "0.1.0",
   "private": true,
-  "description": "Shared configuration utilities: fail-fast environment validation with zod.",
+  "description": "Shared configuration for the Sellonit apps.",
   "type": "module",
   "sideEffects": false,
   "exports": {
@@ -17,9 +17,6 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "zod": "^4.6.5"
+    "test": "vitest run --passWithNoTests"
   }
 }

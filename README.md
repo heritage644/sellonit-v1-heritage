@@ -1,33 +1,34 @@
 # Sellonit
 
-Virtual-inventory commerce and supply-chain platform: suppliers own the
-physical product master records, retailers sell them through their own
-storefronts, and orders flow through fulfillment and shipment via pluggable
-third-party logistics (3PL) providers.
+Virtual-inventory commerce and supply-chain platform.
 
-> **Status: repository foundation.** Infrastructure, security middleware,
-> health checks, the contract-driven route skeleton, the worker and the web
-> shell work end to end. Business operations are mounted but answer
-> `501 NOT_IMPLEMENTED` until they are built. See [`apps/api/README.md`](apps/api/README.md).
+> **Status: empty skeleton.** The tooling, workspaces, Docker setup and CI/CD
+> are in place. No application or business logic has been written — the API,
+> worker and web entry points are minimal starting points.
 
 ## Repository layout
 
 ```
 apps/
-  api/        Express 5 REST API — modular monolith, Prisma/PostgreSQL, BullMQ producer
-  worker/     BullMQ background worker (separate process)
-  web/        Next.js 16 frontend shell (App Router)
+  api/        Express REST API + Prisma (PostgreSQL)
+    prisma/     Prisma schema (multi-file, no models yet) and migrations
+    src/        main.ts entry point; config/, http/middleware/, infrastructure/,
+                modules/<domain>/ folders are empty and ready to fill
+    test/       integration/ tests go here
+  worker/     BullMQ background worker (separate process); src/jobs/ is empty
+  web/        Next.js frontend (App Router); src/app, src/lib, src/config
 packages/
-  shared/     Browser-safe: OpenAPI-generated types, contract enums, error codes, money utils
-  config/     Server-side env validation helpers (zod)
-  queue/      SERVER-ONLY: queue names, job payload contracts, Redis/BullMQ connection factory
+  shared/     Browser-safe code shared by the apps; holds the generated API types
+  config/     Shared configuration (empty)
+  queue/      SERVER-ONLY shared BullMQ/Redis setup (empty)
 docs/
-  openapi.yaml          The API contract — source of truth for the HTTP API
-  README.md             Contract README: domain rules, MVP aggregation rules, CI contract gate
-  Contract_Engineering_Rules.md  Versioning, HTTP semantics, concurrency, authorization, payment rules
-  contract-review.md    Open questions/inconsistencies found in the contract
+  openapi.yaml                   The API contract — source of truth for the HTTP API
+  README.md                      Contract README: domain rules, MVP rules, CI contract gate
+  Contract_Engineering_Rules.md  Versioning, HTTP semantics, authorization, payment rules
+  contract-review.md             Open questions found in the contract
 scripts/
   check-api-types.mjs   Fails if generated API types drift from docs/openapi.yaml
+.github/workflows/      ci.yml, api-contract.yml, deploy-api.yml
 docker-compose.yml      PostgreSQL + Redis (default) and containerised apps (profile `apps`)
 ```
 
@@ -37,10 +38,9 @@ or other apps. Only `@sellonit/shared` crosses the frontend/backend boundary.
 
 ## Stack
 
-Node.js 22 LTS · TypeScript 5.9 (strict) · npm workspaces · Express 5 · zod 4 ·
-PostgreSQL 17 + Prisma 7 (driver adapter `@prisma/adapter-pg`) · Redis 7 +
-BullMQ 5 + ioredis · pino · Next.js 16 + React 19 · openapi-typescript +
-openapi-fetch · Vitest · ESLint 10 (typescript-eslint) · Prettier · Docker Compose.
+Node.js 22 LTS · TypeScript 5.9 (strict) · npm workspaces · Express 5 ·
+PostgreSQL 17 + Prisma 7 · Redis 7 + BullMQ 5 + ioredis · Next.js 16 + React 19 ·
+openapi-typescript · Vitest · ESLint · Prettier · Docker Compose.
 
 ## Getting started
 
@@ -48,72 +48,43 @@ Prerequisites: Node.js ≥ 22.12 (`nvm use`), npm ≥ 10, Docker (for PostgreSQL
 
 ```bash
 npm ci
-cp .env.example .env            # then set JWT_ACCESS_SECRET etc. — see comments in the file
+cp .env.example .env
 docker compose up -d            # PostgreSQL + Redis on 127.0.0.1
-npm run db:deploy               # apply migrations (none exist yet — foundation only)
-npm run dev                     # api :4000, worker, web :3000 (builds shared packages first)
+npm run dev                     # api :4000, worker, web :3000
 ```
-
-Then open:
-
-- http://localhost:3000 — web shell
-- http://localhost:3000/status — dev diagnostics: web → API → PostgreSQL/Redis
-- http://localhost:4000/v1/health and `/v1/health/ready`
 
 To run everything in containers instead: `docker compose --profile apps up --build`.
 
 ## Commands
 
-| Command                                            | What it does                                                                        |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `npm run dev`                                      | Build shared packages, generate Prisma client, run api + worker + web in watch mode |
-| `npm run lint`                                     | ESLint (type-aware), zero warnings allowed                                          |
-| `npm run format` / `format:check`                  | Prettier                                                                            |
-| `npm run typecheck`                                | `tsc --noEmit` in every workspace (web runs `next typegen` first)                   |
-| `npm test`                                         | Unit, HTTP and contract-conformance tests — no services required                    |
-| `npm run test:integration`                         | Tests against real PostgreSQL + Redis (`DATABASE_URL`, `REDIS_URL`)                 |
-| `npm run build`                                    | Build every workspace (packages, API, worker, Next.js standalone)                   |
-| `npm run generate:api`                             | Regenerate `packages/shared/src/api.d.ts` from `docs/openapi.yaml`                  |
-| `npm run validate:api`                             | Lint the OpenAPI contract (Redocly)                                                 |
-| `npm run check:api-types`                          | Fail if the committed generated types differ from the contract (read-only)          |
-| `npm run db:generate` / `db:migrate` / `db:deploy` | Prisma client / dev migration / apply migrations                                    |
-| `npm run infra:up` / `infra:down`                  | Start / stop the compose stack                                                      |
+| Command                                            | What it does                                                               |
+| -------------------------------------------------- | -------------------------------------------------------------------------- |
+| `npm run dev`                                      | Build shared packages, generate Prisma client, run api + worker + web      |
+| `npm run lint`                                     | ESLint (type-aware), zero warnings allowed                                 |
+| `npm run format` / `format:check`                  | Prettier                                                                   |
+| `npm run typecheck`                                | `tsc --noEmit` in every workspace                                          |
+| `npm test`                                         | Unit tests (`*.test.ts`)                                                   |
+| `npm run test:integration`                         | Integration tests (`*.int.test.ts`) against real PostgreSQL + Redis        |
+| `npm run build`                                    | Build every workspace                                                      |
+| `npm run generate:api`                             | Regenerate `packages/shared/src/api.d.ts` from `docs/openapi.yaml`         |
+| `npm run validate:api`                             | Lint the OpenAPI contract (Redocly)                                        |
+| `npm run check:api-types`                          | Fail if the committed generated types differ from the contract (read-only) |
+| `npm run db:generate` / `db:migrate` / `db:deploy` | Prisma client / dev migration / apply migrations                           |
+| `npm run infra:up` / `infra:down`                  | Start / stop the compose stack                                             |
 
-`lint`, `typecheck`, `test` and `test:integration` first run `prepare:workspace`
-(build shared packages + generate the Prisma client), so they work on a fresh clone.
+Test scripts use `--passWithNoTests` because the repository has no tests yet;
+any test you add that fails still fails the run.
 
 ## API contract workflow
 
 `docs/openapi.yaml` is the source of truth. To change the API:
 
-1. Edit `docs/openapi.yaml` following `docs/Contract_Engineering_Rules.md` (breaking changes need a
-   new API version; open questions are in `docs/contract-review.md`).
-2. `npm run validate:api && npm run generate:api` and commit the regenerated
+1. Edit `docs/openapi.yaml` following `docs/Contract_Engineering_Rules.md`.
+2. `npm run validate:api && npm run generate:api`, then commit the regenerated
    `packages/shared/src/api.d.ts` together with the contract.
-3. Update the route registry in the relevant `apps/api/src/modules/*` —
-   `apps/api/test/contract-conformance.test.ts` fails until paths, security
-   and `Idempotency-Key` usage match the contract.
 
 CI never regenerates or commits files; it only verifies (`check:api-types`).
 
-## Architecture notes
-
-- **API:** modular monolith, one folder per domain module; cross-cutting
-  concerns (rate limiting, authentication, idempotency keys, webhook signatures)
-  are applied by the router from each route's declaration.
-- **Domain rules baked into the structure:** `SupplierProduct` is the master
-  record and `RetailerProductListing` references it; Order ≠ Fulfillment ≠
-  Shipment; demand aggregation and `BulkSupplyRequest` have their own modules;
-  3PLs sit behind a `FulfillmentProvider` interface and payments behind
-  `PaymentProvider` — no provider is hardcoded.
-- **Worker:** consumes BullMQ queues defined in `@sellonit/queue`; the API
-  enqueues with the same typed contracts. Only an infrastructure `system.ping` job exists.
-- **Web:** server components call the API with a typed `openapi-fetch` client;
-  browser calls go through the same-origin `/api/v1/*` proxy. No global state library.
-
 ## Environment
 
-All variables are documented in [`.env.example`](.env.example). Configuration
-is validated at start-up; in `NODE_ENV=production` the API refuses to start
-without `JWT_ACCESS_SECRET`, `PAYMENT_WEBHOOK_SECRET`, `THREE_PL_WEBHOOK_SECRET`
-and `CORS_ORIGINS`. Never commit `.env`.
+All variables are listed in [`.env.example`](.env.example). Never commit `.env`.

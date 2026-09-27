@@ -21,12 +21,9 @@ COPY apps/web/package.json apps/web/
 RUN --mount=type=cache,target=/root/.npm npm ci --ignore-scripts
 
 FROM deps AS build
-# Both are baked into the build: the /api/v1 proxy rewrite target and the
-# browser-visible API base URL. Neither may contain secrets.
+# Baked into the build: the /api/v1 proxy rewrite target. Must not contain secrets.
 ARG API_INTERNAL_URL=http://api:4000
-ARG NEXT_PUBLIC_API_BASE_URL=/api/v1
-ENV API_INTERNAL_URL=${API_INTERNAL_URL} \
-    NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+ENV API_INTERNAL_URL=${API_INTERNAL_URL}
 COPY tsconfig.base.json ./
 COPY packages/shared/ packages/shared/
 COPY apps/web/ apps/web/

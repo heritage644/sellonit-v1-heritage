@@ -2,7 +2,7 @@
   "name": "@sellonit/shared",
   "version": "0.1.0",
   "private": true,
-  "description": "Browser-safe contracts shared by Sellonit apps: generated OpenAPI types, contract enums, error codes and pure utilities. Never add server-only code here.",
+  "description": "Browser-safe code shared by Sellonit apps, including the types generated from docs/openapi.yaml. Never add server-only code here.",
   "type": "module",
   "sideEffects": false,
   "exports": {
@@ -17,6 +17,6 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json && node scripts/copy-generated.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run --passWithNoTests"
   }
 }
