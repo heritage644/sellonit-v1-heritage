@@ -1,0 +1,31 @@
+// Sellonit database schema — root file.
+//
+// This directory is a Prisma multi-file schema. Keep only the generator and
+// datasource here; each API domain module adds its own file, e.g.
+//   prisma/schema/businesses.prisma
+//   prisma/schema/supplier-products.prisma
+//   prisma/schema/orders.prisma
+//
+// Conventions (see apps/api/README.md):
+//   - Model names are singular PascalCase; tables are mapped to snake_case plural
+//     with @@map, columns to snake_case with @map.
+//   - Primary keys are UUIDs (`@db.Uuid`) — the contract exposes UUID ids.
+//   - Money is stored as integer minor units (BigInt/Int) plus a currency
+//     column; never as floating point.
+//   - SupplierProduct is the physical master record; RetailerProductListing
+//     references it (never copy supplier product data into listings).
+//   - Order, Fulfillment and Shipment are separate models.
+//   - Every schema change ships with a migration (`npm run db:migrate`).
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../../src/generated/prisma"
+  // Match the API's ESM + NodeNext TypeScript setup so `tsc` compiles the
+  // generated client like any other source file.
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
