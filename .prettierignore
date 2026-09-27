@@ -9,5 +9,6 @@ apps/api/prisma/migrations
 # Generated from docs/openapi.yaml — must stay byte-identical to openapi-typescript output
 packages/shared/src/api.d.ts
 
-# The API contract is formatted by hand; do not reflow it
+# Supplied contract documents are kept as authored; do not reflow them
 docs/openapi.yaml
+docs/Contract_Engineering_Rules.md
