@@ -1,0 +1,137 @@
+# Sellonit local environment.
+#
+#   cp .env.example .env
+#   docker compose up -d                       # PostgreSQL + Redis only (for `npm run dev`)
+#   docker compose --profile apps up --build   # + migrate, api, worker, web in containers
+#
+# Ports bind to 127.0.0.1 only. Values are interpolated from .env (read by
+# docker compose automatically) — no credentials are hardcoded here.
+# If POSTGRES_PASSWORD contains URL-reserved characters, percent-encode it.
+
+name: sellonit
+
+# Shared by api and worker. The worker gets no DATABASE_URL (it does not use PostgreSQL).
+x-app-env: &app-env
+  NODE_ENV: ${NODE_ENV:-development}
+  LOG_LEVEL: ${LOG_LEVEL:-info}
+  REDIS_URL: redis://redis:6379
+  QUEUE_PREFIX: ${QUEUE_PREFIX:-sellonit}
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sellonit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-sellonit}
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    # BullMQ requires noeviction: evicted keys would silently lose jobs.
+    command: ['redis-server', '--appendonly', 'yes', '--maxmemory-policy', 'noeviction']
+    ports:
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # One-off: applies committed Prisma migrations, then exits.
+  migrate:
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: migrate
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sellonit}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-sellonit}?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+
+  api:
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: runtime
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sellonit}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-sellonit}?schema=public
+      API_HOST: 0.0.0.0
+      API_PORT: 4000
+      API_TRUST_PROXY: ${API_TRUST_PROXY:-0}
+      API_BODY_LIMIT: ${API_BODY_LIMIT:-1mb}
+      API_SHUTDOWN_TIMEOUT_MS: ${API_SHUTDOWN_TIMEOUT_MS:-10000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-}
+      JWT_ISSUER: ${JWT_ISSUER:-sellonit-api}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-sellonit}
+      PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:-}
+      THREE_PL_WEBHOOK_SECRET: ${THREE_PL_WEBHOOK_SECRET:-}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-60000}
+      RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-300}
+      AUTH_RATE_LIMIT_MAX: ${AUTH_RATE_LIMIT_MAX:-20}
+    ports:
+      - '127.0.0.1:4000:4000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  worker:
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+      target: runtime
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-5}
+      REDIS_CONNECT_TIMEOUT_MS: ${REDIS_CONNECT_TIMEOUT_MS:-10000}
+      WORKER_SHUTDOWN_TIMEOUT_MS: ${WORKER_SHUTDOWN_TIMEOUT_MS:-30000}
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  web:
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: runtime
+      args:
+        API_INTERNAL_URL: http://api:4000
+        NEXT_PUBLIC_API_BASE_URL: /api/v1
+    restart: unless-stopped
+    environment:
+      API_INTERNAL_URL: http://api:4000
+      WEB_ENABLE_STATUS_PAGE: ${WEB_ENABLE_STATUS_PAGE:-true}
+    ports:
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      - api
+
+volumes:
+  postgres-data:
+  redis-data:
