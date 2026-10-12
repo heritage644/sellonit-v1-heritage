@@ -4,7 +4,11 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 import { Field } from './Field';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { register } from '@/lib/auth/api';
 import { ApiError } from '@/lib/api-client';
 import { authErrorMessage } from '@/lib/auth/errors';
@@ -118,17 +122,15 @@ export function CreateAccountForm() {
     : null;
 
   return (
-    <div>
-      <h1 className="card-title">Create your account</h1>
-      <p className="card-subtitle">
-        Sell on Sellonit with your phone number. We&apos;ll text you a 6-digit code to verify it.
-      </p>
-      <form className="auth-form" onSubmit={handleSubmit} noValidate>
-        {serverError ? (
-          <p className="alert alert-error" role="alert">
-            {serverError}
-          </p>
-        ) : null}
+    <div className="flex flex-col gap-6">
+      <CardHeader>
+        <CardTitle>Create your account</CardTitle>
+        <CardDescription>
+          Sell on Sellonit with your phone number. We&apos;ll text you a 6-digit code to verify it.
+        </CardDescription>
+      </CardHeader>
+      <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
+        {serverError ? <Alert variant="destructive">{serverError}</Alert> : null}
         <Field
           id="phone"
           label="Phone number"
@@ -149,7 +151,7 @@ export function CreateAccountForm() {
           placeholder="803 123 4567"
           maxLength={10}
         />
-        <div className="field-row">
+        <div className="grid grid-cols-1 gap-4 min-[381px]:grid-cols-2 min-[381px]:gap-3">
           <Field
             id="firstName"
             label="First name"
@@ -205,28 +207,26 @@ export function CreateAccountForm() {
           autoComplete="new-password"
           placeholder="Create a password"
         />
-        <button
-          className="btn btn-primary"
-          type="submit"
-          disabled={submitting}
-          aria-busy={submitting}
-        >
+        <Button type="submit" disabled={submitting} aria-busy={submitting}>
           {submitting ? (
             <>
-              <span className="spinner" aria-hidden="true" />
+              <Loader2 className="animate-spin" aria-hidden="true" />
               Creating your account…
             </>
           ) : (
             'Continue'
           )}
-        </button>
+        </Button>
       </form>
-      <p className="card-footer">
+      <CardFooter>
         Already have an account?{' '}
-        <Link className="link" href="/auth/login">
+        <Link
+          className="font-semibold text-foreground underline underline-offset-2 hover:text-primary-hover"
+          href="/auth/login"
+        >
           Log in
         </Link>
-      </p>
+      </CardFooter>
     </div>
   );
 }
