@@ -5,10 +5,13 @@ const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 
 /**
  * Where the Next.js server reaches the API (server-side fetches and the
- * `/api/v1/*` proxy below). Rewrites are resolved at BUILD time, so this must
- * be set when running `next build` (the Dockerfile takes it as a build arg).
+ * `/api/v1/*` proxy below). This is the API base WITHOUT the `/v1` suffix —
+ * the API mounts its routes under `/api/v1`, so the local default is
+ * `http://localhost:4000/api`. Rewrites are resolved at BUILD time, so this
+ * must be set when running `next build` (the Dockerfile takes it as a build
+ * arg).
  */
-const apiInternalUrl = (process.env.API_INTERNAL_URL ?? 'http://localhost:4000').replace(
+const apiInternalUrl = (process.env.API_INTERNAL_URL ?? 'http://localhost:4000/api').replace(
   /\/+$/,
   '',
 );
