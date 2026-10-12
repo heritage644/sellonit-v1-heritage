@@ -1,4 +1,7 @@
 import type { InputHTMLAttributes } from 'react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 
 type BaseInputProps = Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -28,25 +31,34 @@ export function Field(props: FieldProps) {
   const describedBy = error ? `${id}-error` : helper ? `${id}-helper` : undefined;
 
   const input = (
-    <input
+    <Input
       id={id}
       value={value}
       onChange={(event) => onChange(event.target.value)}
       aria-invalid={error ? true : undefined}
       aria-describedby={describedBy}
-      className={inputClassName}
+      className={cn(
+        prefix && 'h-11 border-0 rounded-none shadow-none focus-visible:ring-0',
+        inputClassName,
+      )}
       {...inputProps}
     />
   );
 
   return (
-    <div className="field">
-      <label className="field-label" htmlFor={id}>
-        {label}
-      </label>
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor={id}>{label}</Label>
       {prefix ? (
-        <div className={`input-group${error ? ' has-error' : ''}`}>
-          <span className="input-prefix" aria-hidden="true">
+        <div
+          className={cn(
+            'flex items-stretch rounded-control border border-input bg-card transition-[border-color,box-shadow] focus-within:border-primary focus-within:ring-3 focus-within:ring-primary/16',
+            error && 'border-destructive focus-within:ring-destructive/14',
+          )}
+        >
+          <span
+            className="flex items-center border-r border-border bg-field-bg px-3 text-[15px] font-semibold whitespace-nowrap text-muted-foreground"
+            aria-hidden="true"
+          >
             {prefix}
           </span>
           {input}
@@ -55,11 +67,11 @@ export function Field(props: FieldProps) {
         input
       )}
       {error ? (
-        <p className="field-error" id={`${id}-error`} role="alert">
+        <p className="text-[13px] leading-snug text-destructive" id={`${id}-error`} role="alert">
           {error}
         </p>
       ) : helper ? (
-        <p className="field-helper" id={`${id}-helper`}>
+        <p className="text-[13px] leading-snug text-faint" id={`${id}-helper`}>
           {helper}
         </p>
       ) : null}

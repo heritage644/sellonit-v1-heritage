@@ -4,7 +4,11 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 import { Field } from './Field';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { login } from '@/lib/auth/api';
 import { authErrorMessage } from '@/lib/auth/errors';
 import { isEmail } from '@/lib/auth/validation';
@@ -52,15 +56,13 @@ export function LoginForm() {
   }
 
   return (
-    <div>
-      <h1 className="card-title">Log in</h1>
-      <p className="card-subtitle">Welcome back. Enter your email and password to continue.</p>
-      <form className="auth-form" onSubmit={handleSubmit} noValidate>
-        {serverError ? (
-          <p className="alert alert-error" role="alert">
-            {serverError}
-          </p>
-        ) : null}
+    <div className="flex flex-col gap-6">
+      <CardHeader>
+        <CardTitle>Log in</CardTitle>
+        <CardDescription>Welcome back. Enter your email and password to continue.</CardDescription>
+      </CardHeader>
+      <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
+        {serverError ? <Alert variant="destructive">{serverError}</Alert> : null}
         <Field
           id="email"
           label="Email"
@@ -91,28 +93,26 @@ export function LoginForm() {
           autoComplete="current-password"
           placeholder="Your password"
         />
-        <button
-          className="btn btn-primary"
-          type="submit"
-          disabled={submitting}
-          aria-busy={submitting}
-        >
+        <Button type="submit" disabled={submitting} aria-busy={submitting}>
           {submitting ? (
             <>
-              <span className="spinner" aria-hidden="true" />
+              <Loader2 className="animate-spin" aria-hidden="true" />
               Logging in…
             </>
           ) : (
             'Log in'
           )}
-        </button>
+        </Button>
       </form>
-      <p className="card-footer">
+      <CardFooter>
         New to Sellonit?{' '}
-        <Link className="link" href="/auth/register">
+        <Link
+          className="font-semibold text-foreground underline underline-offset-2 hover:text-primary-hover"
+          href="/auth/register"
+        >
           Create your account
         </Link>
-      </p>
+      </CardFooter>
     </div>
   );
 }

@@ -3,7 +3,10 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import Link from 'next/link';
+import { CheckCircle2, Loader2 } from 'lucide-react';
 import { Field } from './Field';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { verifyPhone } from '@/lib/auth/api';
 import { authErrorMessage } from '@/lib/auth/errors';
 import { formatPhoneDisplay, isVerificationCode, onlyDigits } from '@/lib/auth/validation';
@@ -15,6 +18,9 @@ type VerifyPhoneFormProps = {
 
 const PHONE_PATTERN = /^(0\d{10}|\+234\d{10})$/;
 
+const linkClass =
+  'font-semibold text-foreground underline underline-offset-2 hover:text-primary-hover';
+
 export function VerifyPhoneForm({ phone }: VerifyPhoneFormProps) {
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -25,12 +31,14 @@ export function VerifyPhoneForm({ phone }: VerifyPhoneFormProps) {
 
   if (!validPhone) {
     return (
-      <div>
-        <h1 className="card-title">Verify your phone number</h1>
-        <p className="card-subtitle">
-          Enter your phone number first and we&apos;ll send you a 6-digit verification code.
-        </p>
-        <Link className="btn btn-primary" href="/auth/register">
+      <div className="flex flex-col gap-6">
+        <CardHeader>
+          <CardTitle>Verify your phone number</CardTitle>
+          <CardDescription>
+            Enter your phone number first and we&apos;ll send you a 6-digit verification code.
+          </CardDescription>
+        </CardHeader>
+        <Link className={buttonVariants()} href="/auth/register">
           Enter your phone number
         </Link>
       </div>
@@ -67,44 +75,43 @@ export function VerifyPhoneForm({ phone }: VerifyPhoneFormProps) {
 
   if (verified) {
     return (
-      <div className="success-panel">
-        <span className="success-icon" aria-hidden="true">
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M20 6L9 17l-5-5" />
-          </svg>
+      <div className="flex flex-col items-center gap-6 text-center">
+        <span
+          className="flex size-13 items-center justify-center rounded-full bg-success/10 text-success"
+          aria-hidden="true"
+        >
+          <CheckCircle2 className="size-6" strokeWidth={2.5} />
         </span>
-        <h1 className="card-title">Phone number verified</h1>
-        <p className="card-subtitle success-copy">
-          Your number is verified. Check your email inbox and click the verification link to finish
-          setting up your account, then log in to continue.
-        </p>
-        <Link className="btn btn-primary" href="/auth/login">
-          Log in
-        </Link>
-        <Link className="link" href="/auth/register">
-          Use a different number
-        </Link>
+        <CardHeader className="items-center">
+          <CardTitle>Phone number verified</CardTitle>
+          <CardDescription>
+            Your number is verified. Check your email inbox and click the verification link to
+            finish setting up your account, then log in to continue.
+          </CardDescription>
+        </CardHeader>
+        <div className="flex w-full flex-col items-center gap-4">
+          <Link className={buttonVariants()} href="/auth/login">
+            Log in
+          </Link>
+          <Link className={linkClass} href="/auth/register">
+            Use a different number
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <h1 className="card-title">Verify your phone number</h1>
-      <p className="card-subtitle">
-        We sent a 6-digit code to <strong>{formatPhoneDisplay(phone)}</strong>. Enter it below to
-        verify your number.
-      </p>
-      <form className="auth-form" onSubmit={handleSubmit} noValidate>
+    <div className="flex flex-col gap-6">
+      <CardHeader>
+        <CardTitle>Verify your phone number</CardTitle>
+        <CardDescription>
+          We sent a 6-digit code to{' '}
+          <strong className="text-foreground">{formatPhoneDisplay(phone)}</strong>. Enter it below
+          to verify your number.
+        </CardDescription>
+      </CardHeader>
+      <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
         <Field
           id="code"
           label="Verification code"
@@ -116,28 +123,23 @@ export function VerifyPhoneForm({ phone }: VerifyPhoneFormProps) {
             }
           }}
           error={error}
-          inputClassName="code-input"
+          inputClassName="h-12 text-center text-xl font-semibold tracking-[0.45em] indent-[0.45em] tabular-nums"
           inputMode="numeric"
           autoComplete="one-time-code"
           placeholder="000000"
           maxLength={6}
         />
-        <button
-          className="btn btn-primary"
-          type="submit"
-          disabled={submitting}
-          aria-busy={submitting}
-        >
+        <Button type="submit" disabled={submitting} aria-busy={submitting}>
           {submitting ? (
             <>
-              <span className="spinner" aria-hidden="true" />
+              <Loader2 className="animate-spin" aria-hidden="true" />
               Verifying…
             </>
           ) : (
             'Verify code'
           )}
-        </button>
-        <p className="field-helper verify-note">
+        </Button>
+        <p className="text-center text-[13px] leading-snug text-faint">
           Didn&apos;t get a code? It expires 10 minutes after it&apos;s sent.
         </p>
       </form>
