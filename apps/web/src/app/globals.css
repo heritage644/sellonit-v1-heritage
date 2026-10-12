@@ -1,7 +1,3 @@
-/* Sellonit web — global styles.
-   Brand palette (provided by design):
-   Tangerine #FF8B00 · Mint Green #00875A · Pure White #FFFFFF
-   Light Blue #3FBFFF · Black #181818 · Bright Red #DE350B */
 
 :root {
   --color-primary: #ff8b00;
@@ -11,7 +7,7 @@
   --color-accent: #3fbfff;
   --color-ink: #181818;
   --color-surface: #ffffff;
-  --color-page: #f6f4f0;
+  --color-page: #F3F4F6;
   --color-muted: #5f5b54;
   --color-faint: #8a857c;
   --color-line: #e3e0d8;
